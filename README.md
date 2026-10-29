@@ -92,13 +92,13 @@ flowchart LR
 | Component | Value |
 |---|---|
 | Laptop | «brand / model» |
-| CPU | «e.g. Intel Core i5-xxxx, x cores» |
-| RAM (host) | «x GB» |
-| Storage | «x GB SSD, y GB free before setup» |
+| CPU | «e.g. Intel Core i5-6300U, 4 cores» |
+| RAM (host) | «8 GB» |
+| Storage | «465 GB HDD, 255 GB free before setup» |
 | Host OS | «Windows 10/11, build xxxxx» |
-| VirtualBox | «x.y.z» |
+| VirtualBox | «Kali-linux» |
 | Kali image | `kali-linux-«2026.x»-virtualbox-amd64` |
-| Kali VM resources | «x MB RAM · x vCPU · x GB disk» |
+| Kali VM resources | «3 MB RAM · 2 vCPU · 100 GB disk» |
 | Host IP (LAN) | «x.x.x.x» |
 | Virtualization | VT-x / AMD-V: «enabled in BIOS: yes/no, did I need to change it?» |
 
@@ -219,7 +219,7 @@ I verified every claim with a command, not by assumption.
 pass(){ echo -e "[\e[32mPASS\e[0m] $1"; }
 fail(){ echo -e "[\e[31mFAIL\e[0m] $1"; }
 
-ip -4 addr show | grep -q "10.0.0.2/24"        && pass "Static IP 10.0.0.2/24 present"   || fail "IP not 10.0.0.2/24"
+ip -4 addr show | grep -q "10.0.0.2/24"         && pass "Static IP 10.0.0.2/24 present"   || fail "IP not 10.0.0.2/24"
 ip route | grep -q "default via 10.0.0.1"       && pass "Default gateway 10.0.0.1"        || fail "Gateway wrong"
 ping -c2 -W2 10.0.0.1 >/dev/null 2>&1           && pass "Gateway reachable"               || fail "Gateway unreachable"
 ping -c2 -W2 8.8.8.8  >/dev/null 2>&1           && pass "Internet reachable (IP)"         || fail "No internet by IP"
