@@ -1,337 +1,188 @@
 <div align="center">
 
-# 🛡️ Isolated Cybersecurity Lab: VirtualBox + Kali Linux on a Private NAT Network
+# 🛡️ Cybersecurity Lab Setup: VirtualBox + Kali Linux
 
-**Networkwalks Academy · Week 1 · Project Module 1 (WK1-PM1)**
+![Course](https://img.shields.io/badge/Networkwalks-WK1--PM1-C00000?style=for-the-badge)
+![Hypervisor](https://img.shields.io/badge/VirtualBox-7.2.8-183A61?style=for-the-badge&logo=virtualbox&logoColor=white)
+![Kali](https://img.shields.io/badge/Kali_Linux-2026.2-557C94?style=for-the-badge&logo=kalilinux&logoColor=white)
+![Network](https://img.shields.io/badge/NAT_Network-10.0.0.0%2F24-2EA44F?style=for-the-badge)
+![DHCP](https://img.shields.io/badge/DHCP-Enabled-F59E0B?style=for-the-badge)
+![Kernel](https://img.shields.io/badge/Kernel-6.19.14-8B5CF6?style=for-the-badge&logo=linux&logoColor=white)
+![Focus](https://img.shields.io/badge/Focus-Ethical_Hacking-E11D48?style=for-the-badge)
+![Internet](https://img.shields.io/badge/Internet-Verified-06B6D4?style=for-the-badge)
 
-![VirtualBox](https://img.shields.io/badge/Hypervisor-VirtualBox_«VERSION»-183A61?logo=virtualbox&logoColor=white)
-![Kali](https://img.shields.io/badge/Attacker-Kali_Linux_«VERSION»-557C94?logo=kalilinux&logoColor=white)
-![Network](https://img.shields.io/badge/Network-10.0.0.0%2F24_NAT_Network-success)
-![Status](https://img.shields.io/badge/Status-Complete_%26_Verified-brightgreen)
-
-*A reproducible, snapshot-protected attacker machine that cannot touch my real network.*
+**An isolated attacker machine on a private virtual network, built on my own laptop.**
 
 </div>
 
 ---
 
-## 📑 Contents
-1. [Summary](#-summary)
-2. [Requirements checklist](#-requirements-checklist-wk1-pm1)
-3. [Architecture](#-architecture)
-4. [My hardware & software](#-my-hardware--software)
-5. [Why NAT Network](#-design-decision-why-nat-network)
-6. [Build procedure](#-build-procedure)
-7. [Verification evidence](#-verification-evidence)
-8. [Problems I hit & how I solved them](#-problems-i-hit--how-i-solved-them)
-9. [Lab hygiene & safety](#-lab-hygiene--safety)
-10. [Troubleshooting guide](#-troubleshooting-guide)
-11. [What I learned](#-what-i-learned)
-12. [Roadmap (Phase 2)](#-roadmap-phase-2)
-13. [Author](#-author)
+## 📌 Summary
+
+I built a Kali Linux attacker VM on VirtualBox and attached it to a custom **NAT Network (`10.0.0.0/24`)**. The VM has internet access, a shared host folder, and sits behind NAT so it is not exposed to my real network. It is the base for the later labs (Windows targets and CTF machines on the same subnet).
+
+Every result below is backed by a screenshot from my own machine.
 
 ---
 
-## 🎯 Summary
-
-I built an isolated offensive-security lab on my own «LAPTOP MODEL». The lab has a Kali Linux attacker VM on a custom VirtualBox **NAT Network (`10.0.0.0/24`)** with a **static IP of `10.0.0.2`**, full internet access, clipboard/drag-and-drop, a shared host folder, and a clean **baseline snapshot**.
-
-The goal is not just "Kali runs". The goal is a lab where I can break things, scan things, and recover in seconds, with no risk to my host or home network, and where other VMs (Windows targets, CTF machines) can be dropped in later.
-
----
-
-## ✅ Requirements checklist (WK1-PM1)
+## ✅ Requirements checklist
 
 | # | Requirement | Status | Evidence |
 |---|---|:--:|---|
-| 1 | VirtualBox as base (latest recommended) | ✅ | [Screenshot 01](#evidence-gallery) · version `«x.y.z»` |
-| 2 | Kali Linux as attacker machine | ✅ | [Screenshot 03](#evidence-gallery) |
-| 3 | Network in subnet `10.0.0.0/24` | ✅ | [Screenshot 02](#evidence-gallery) |
-| 4 | Uses a **NATNetwork** with `10.0.0.0/24` | ✅ | [Screenshot 02](#evidence-gallery) |
-| 5 | Clipboard & drag/drop enabled | ✅ | [Screenshot 05](#evidence-gallery) |
-| 6 | Shared folder: host `/Downloads` | ✅ | [Screenshot 06](#evidence-gallery) |
-| 7 | Kali IP = `10.0.0.2/24` | ✅ | [Screenshot 04](#evidence-gallery) · `ip a` output below |
-| 8 | Kali has full internet access | ✅ | ping/DNS/`apt` output below |
-| 9 | Snapshot taken | ✅ | [Screenshot 07](#evidence-gallery) |
+| 1 | VirtualBox as base (latest) | ✅ | [01](#01--virtualbox-version) |
+| 2 | Kali Linux as attacker machine | ✅ | [03](#03--kali-linux-running) |
+| 3 | Subnet `10.0.0.0/24` | ✅ | [02](#02--nat-network) |
+| 4 | NATNetwork with `10.0.0.0/24` | ✅ | [02](#02--nat-network) |
+| 5 | Clipboard & drag/drop enabled | «add screenshot» | «Settings → General → Advanced» |
+| 6 | Shared folder from host Downloads | ✅ mounted | [06](#06--shared-folder) |
+| 7 | Kali IP = `10.0.0.2/24` | ✅ after fix, see [Problem 1](#-problems-i-faced) | [04](#04--static-ip-configured), [Problem 1 proof](#-problems-i-faced) |
+| 8 | Full internet access | ✅ | [07](#07--connectivity-tests) |
+| 9 | Snapshot taken | «add screenshot» | «Snapshots tab» |
 
 ---
 
-## 🏗️ Architecture
+## 🧰 My environment
 
-```mermaid
-flowchart LR
-    Internet((Internet))
-    subgraph HOST["Host: Windows «10/11» · IP «x.x.x.x»"]
-        direction LR
-        subgraph VBOX["VirtualBox: NatNetwork 10.0.0.0/24 (DHCP on)"]
-            GW["NAT gateway<br/>10.0.0.1"]
-            KALI["🐉 Kali Linux<br/>10.0.0.2/24<br/>(static)"]
-            FUT["Phase 2 targets<br/>Win 11 · Win 10 · Win 7 · Android<br/>10.0.0.7 – .16"]
-        end
-        SF[("Shared folder<br/>Host Downloads")]
-    end
-    KALI --- GW
-    FUT -.-> GW
-    GW --> Internet
-    SF <-.-> KALI
+| Item | Value |
+|---|---|
+| Laptop | «model, CPU, RAM, storage» |
+| Host OS | «your host OS» |
+| VirtualBox | **7.2.8 r173730** (Qt 6.11.1) |
+| Guest OS | **Kali GNU/Linux Rolling 2026.2** |
+| Guest kernel | `6.19.14+kali-amd64` |
+| Guest user / host | `blackknight@kali` |
+| Network | NatNetwork, `10.0.0.0/24`, DHCP enabled, IPv6 off |
+| Gateway | `10.0.0.1` |
+| Extra interface | `docker0` `172.17.0.1/16` (Docker installed, outside the lab subnet) |
+
+---
+
+## 🪜 Build steps & evidence
+
+### 01 · VirtualBox version
+Installed the latest VirtualBox from the official site. **Help → About** shows version 7.2.8.
+
+![VirtualBox About](screenshots/01-virtualbox-about.png)
+
+### 02 · NAT Network
+`File → Tools → Network → NAT Networks → Create`
+Name `NatNetwork`, prefix `10.0.0.0/24`, DHCP **Enabled**, IPv6 off.
+
+![NAT Network](screenshots/02-natnetwork.png)
+
+**Why NAT Network:** unlike plain NAT, VMs on the same NAT Network can talk to each other, and unlike Bridged they stay hidden from my home LAN. That is what a safe attacker/target lab needs.
+
+### 03 · Kali Linux running
+Imported the official Kali VirtualBox image. Confirmed with `cat /etc/os-release | head -3` and `uname -r`.
+
+![Kali running](screenshots/03-kali-running.png)
+
+### 04 · Static IP configured
+`Network Manager → Edit Connections → Wired connection 1 → IPv4 Settings`: Method **Manual**, address `10.0.0.2`, netmask `24`, gateway `10.0.0.1`.
+
+![IPv4 settings](screenshots/04-kali-ipv4-settings.png)
+
+### 05 · Live IP check (before the fix)
+This check exposed the problem described in [Problem 1](#-problems-i-faced): the live address was `10.0.0.3`, not `10.0.0.2`.
+
+```bash
+ip -br a
+ip route
+```
+![ip br a](screenshots/05-ip-br-a-route.png)
+
+### 06 · Shared folder
+The shared folder mounts at `/media/sf_Kali`, and my user is in the `vboxsf` group, which is required for access.
+
+![Shared folder](screenshots/06-shared-folder-groups.png)
+
+### 07 · Connectivity tests (with the static IP `10.0.0.2`)
+Run after fixing the static IP ([Problem 1](#-problems-i-faced)), to prove internet works with the manual configuration.
+
+```bash
+ping -c 4 10.0.0.1 && ping -c 4 8.8.8.8 && nslookup networkwalks.com
 ```
 
-**Traffic rules of this design**
+| Test | Result |
+|---|---|
+| Gateway `10.0.0.1` | 4/4 replies, 0% packet loss, avg 1.58 ms |
+| Internet `8.8.8.8` | 4/4 replies, 0% packet loss, avg 86.58 ms |
+| DNS `networkwalks.com` | Resolved to `192.232.216.135`, answered by my configured DNS server `8.8.8.8` |
 
-| Direction | Allowed? | Why |
-|---|:--:|---|
-| Kali → Internet | ✅ | Updates, tool installs, research |
-| Kali ↔ other VMs on NatNetwork | ✅ | Attack/defence practice |
-| Internet → Kali (unsolicited) | ❌ | NAT Network blocks inbound unless I add port forwarding |
-| Other devices on my home LAN → Kali | ❌ | VMs sit behind the NAT, invisible to the LAN |
+The DNS answer coming from `8.8.8.8` (earlier it came from `1.1.1.1` via DHCP) confirms the manual DNS setting is active.
+
+![Connectivity](screenshots/07-connectivity-tests.png)
+
+### 08 · Interface details
+![ifconfig](screenshots/08-ifconfig.png)
 
 ---
 
-## 💻 My hardware & software
+## 🐞 Problems I faced
 
-| Component | Value |
+### Problem 1: Kali kept a DHCP address (`10.0.0.3`) instead of the required static `10.0.0.2`
+
+| | |
 |---|---|
-| Laptop | «brand / model» |
-| CPU | «Intel Core i5-6300U, 4 cores» |
-| RAM (host) | «8 GB» |
-| Storage | «465 GB HDD, 255 GB free before setup» |
-| Host OS | «Windows 10/11, build xxxxx» |
-| VirtualBox | «Kali-linux» |
-| Kali image | `kali-linux-«2026.x»-virtualbox-amd64` |
-| Kali VM resources | «3 GB RAM · 2 vCPU · 100 GB disk» |
-| Host IP (LAN) | «10.0.0.1» |
-
-> 📌 Minimum recommended by the course: 8 GB RAM, 256 GB SSD, Core i3/i5.
-
----
-
-## 🧠 Design decision: why NAT Network?
-
-VirtualBox offers several adapter modes. I chose **NAT Network** deliberately:
-
-| Mode | VM ↔ VM | VM → Internet | LAN/host can reach VM | Fit for this lab |
-|---|:--:|:--:|:--:|---|
-| NAT | ❌ (each VM isolated) | ✅ | ❌ | ❌ VMs can't attack each other |
-| **NAT Network** | ✅ | ✅ | ❌ | ✅ **Chosen** |
-| Bridged | ✅ | ✅ | ✅ | ⚠️ Puts vulnerable VMs on my real home network |
-| Host-only | ✅ | ❌ | host only | ⚠️ No internet for Kali updates |
-| Internal | ✅ | ❌ | ❌ | ⚠️ No internet, no gateway |
-
-NAT Network is the only mode that gives **VM-to-VM traffic + internet + isolation from my home LAN** at the same time, which is exactly what a safe attack/defence lab needs.
-
----
-
-## 🪜 Build procedure
-
-### Step 1 · Prepare the host
-- Installed **7-Zip** (the Kali VM image ships as a `.7z`).
-- Confirmed hardware virtualization is on (Task Manager → Performance → CPU → *Virtualization: Enabled*). «Note anything you had to change.»
-- Verified the integrity of downloads: `«sha256 check you performed, if any»`.
-
-### Step 2 · Install VirtualBox
-Installed the latest version from the official site. «Mention Extension Pack if installed.»
-
-### Step 3 · Create the NAT Network
-`File → Tools → Network → NAT Networks → Create`
-
-| Field | Value |
-|---|---|
-| Name | `NatNetwork` |
-| IPv4 Prefix | `10.0.0.0/24` |
-| Enable DHCP | ✅ |
-| Enable IPv6 | ❌ (not needed, smaller attack surface) |
-
-### Step 4 · Import Kali
-Downloaded the pre-built VirtualBox image from the official Kali site, extracted it, and imported/added it in VirtualBox.
-
-VM settings applied:
-
-| Setting | Value |
-|---|---|
-| Adapter 1 | Attached to **NAT Network** → `NatNetwork` |
-| Adapter type | Intel PRO/1000 MT Desktop (82540EM) |
-| Promiscuous mode | Allow All *(required later for sniffing/ARP work)* |
-| Base memory | «x MB» |
-| Processors | «x» |
-| Shared Clipboard | **Bidirectional** |
-| Drag'n'Drop | **Bidirectional** |
-| Shared folder | Host `«C:\Users\<you>\Downloads»` → auto-mount ✅, full access |
-
-### Step 5 · Static IP on Kali
-Set through NetworkManager (`Edit Connections → Wired connection 1 → IPv4 Settings`):
-
-| Field | Value |
-|---|---|
-| Method | Manual |
-| Address / Netmask | `10.0.0.2` / `24` |
-| Gateway | `10.0.0.1` |
-| DNS | `8.8.8.8` *(fallback: `10.0.0.1`)* |
-
-CLI equivalent (so it is scriptable and reproducible):
+| **Symptom** | I had set IPv4 to Manual `10.0.0.2/24` in the Network Manager GUI, but `ip -br a` showed `eth0` as **`10.0.0.3/24`** and `ip route` showed `proto dhcp`. |
+| **Evidence (before)** | Screenshots [04](#04--static-ip-configured), [05](#05--live-ip-check-before-the-fix) and [08](#08--interface-details) |
+| **Diagnosis** | `nmcli connection show "Wired connection 1"` reported `ipv4.method: manual` and `ipv4.addresses: 10.0.0.2/24`, so the saved profile was correct. The live interface was still running on the old DHCP lease, meaning the saved settings had not been applied to the active connection. `ipv4.dns` was also empty. |
+| **Fix** | Re-applied the settings from the CLI (adding DNS `8.8.8.8` and `ipv4.dad-timeout 0`, the course-recommended fix for VirtualBox 7 / newer Kali), then restarted the connection so the profile became active. |
+| **Result** | `eth0` is now **`10.0.0.2/24`**. |
 
 ```bash
 sudo nmcli connection modify "Wired connection 1" \
   ipv4.method manual \
   ipv4.addresses 10.0.0.2/24 \
   ipv4.gateway 10.0.0.1 \
-  ipv4.dns "8.8.8.8" \
+  ipv4.dns 8.8.8.8 \
   ipv4.dad-timeout 0
 sudo nmcli connection down "Wired connection 1"
-sudo nmcli connection up   "Wired connection 1"
+sudo nmcli connection up "Wired connection 1"
+ip -br a
 ```
 
-### Step 6 · Guest integration check
-```bash
-# Shared folder
-ls /media/sf_Downloads        # «adjust to your actual mount path»
-# User must be in vboxsf group for access
-groups | grep vboxsf
+**Output after the fix:**
+
+```text
+Connection 'Wired connection 1' successfully deactivated
+Connection successfully activated
+lo               UNKNOWN        127.0.0.1/8 ::1/128
+eth0             UP             10.0.0.2/24 fe80::c88b:8759:e745:d4c6/64
+docker0          DOWN           172.17.0.1/16
 ```
 
-### Step 7 · Snapshot
-`Machine → Take Snapshot` → name: `«Kali-clean-baseline_10.0.0.2_YYYY-MM-DD»`
-Description: *"Fresh Kali, static IP, internet verified, shared folder and clipboard working."*
+![Static IP after fix](screenshots/09-static-ip-after-fix.png)
+
+**Takeaway:** saving a setting in the GUI does not prove it is live. Always verify the running state with `ip -br a` and `ip route`, and look for `proto dhcp` vs `proto static`.
 
 ---
 
-## 🔬 Verification evidence
+## 🔐 Safety notes
 
-I verified every claim with a command, not by assumption.
-
-| Test | Command | Result |
-|---|---|---|
-| Static IP applied | `ip -br a` | «paste output» |
-| Default route | `ip route` | «default via 10.0.0.1» |
-| Gateway reachable | `ping -c 4 10.0.0.1` | «x/4 replies» |
-| Internet (IP) | `ping -c 4 8.8.8.8` | «x/4 replies» |
-| DNS resolution | `nslookup networkwalks.com` | «resolved to …» |
-| Package manager works | `sudo apt update` | «OK» |
-| Shared folder | `touch /media/sf_Downloads/test.txt` → seen on host | «yes/no» |
-| Clipboard | Copy host → paste Kali and reverse | «yes/no» |
-| Snapshot restore | Changed hostname → restored snapshot → hostname reverted | «yes/no» |
-
-**One-shot verification script** (I wrote this so the whole lab can be re-checked in seconds):
-
-```bash
-#!/usr/bin/env bash
-# lab-verify.sh: quick health check for the WK1-PM1 Kali lab
-pass(){ echo -e "[\e[32mPASS\e[0m] $1"; }
-fail(){ echo -e "[\e[31mFAIL\e[0m] $1"; }
-
-ip -4 addr show | grep -q "10.0.0.2/24"         && pass "Static IP 10.0.0.2/24 present"   || fail "IP not 10.0.0.2/24"
-ip route | grep -q "default via 10.0.0.1"       && pass "Default gateway 10.0.0.1"        || fail "Gateway wrong"
-ping -c2 -W2 10.0.0.1 >/dev/null 2>&1           && pass "Gateway reachable"               || fail "Gateway unreachable"
-ping -c2 -W2 8.8.8.8  >/dev/null 2>&1           && pass "Internet reachable (IP)"         || fail "No internet by IP"
-getent hosts networkwalks.com >/dev/null 2>&1   && pass "DNS resolves"                    || fail "DNS failing"
-ls /media/sf_* >/dev/null 2>&1                  && pass "Shared folder mounted"           || fail "Shared folder missing"
-```
-
-### Evidence gallery
-
-| # | What it proves | File |
-|---|---|---|
-| 01 | VirtualBox version + VM list | `screenshots/01-virtualbox-manager.png` |
-| 02 | NAT Network `10.0.0.0/24`, DHCP on | `screenshots/02-natnetwork.png` |
-| 03 | Kali running | `screenshots/03-kali-desktop.png` |
-| 04 | Kali IPv4 manual settings + `ip a` | `screenshots/04-kali-ip.png` |
-| 05 | Clipboard & drag/drop = Bidirectional | `screenshots/05-clipboard-dnd.png` |
-| 06 | Shared folder (host Downloads) | `screenshots/06-shared-folder.png` |
-| 07 | Snapshot tree | `screenshots/07-snapshot.png` |
-| 08 | Ping/DNS/apt output | `screenshots/08-connectivity.png` |
-
-> ⚠️ Blur or crop anything sensitive (username in paths, serials, public IP).
-
----
-
-## 🐞 Problems I hit & how I solved them
-
-> **Only keep problems you personally faced. Use this exact format for each.**
-
-### Problem 1: «short title»
-- **Symptom:** «exact error / behaviour»
-- **Diagnosis:** «what you checked and what it told you»
-- **Root cause:** «why it happened»
-- **Fix:** «commands / settings»
-- **Proof it worked:** «output / screenshot»
-
-*Example of the level of depth to aim for (replace with your real issue):*
-
-### Problem: Kali had a static IP but no internet
-- **Symptom:** `ping 10.0.0.1` worked but `ping 8.8.8.8` hung; browser couldn't load pages.
-- **Diagnosis:** Checked `ip route` (gateway present), then tested IP vs hostname ping to split routing from DNS. «your actual findings»
-- **Root cause:** Known issue with newer VirtualBox 7 + Kali 2026.x: NetworkManager's **Duplicate Address Detection (DAD)** delays bringing up a static IPv4 address, so the connection looks up but isn't usable. Setting the DAD timeout to 0 skips that wait.
-- **Fix:**
-  ```bash
-  sudo nmcli connection modify "Wired connection 1" ipv4.dad-timeout 0
-  sudo nmcli connection down "Wired connection 1"
-  sudo nmcli connection up   "Wired connection 1"
-  ```
-- **Proof:** `ping 8.8.8.8` and `sudo apt update` succeeded.
-
-### Problem: «another real one: VT-x disabled, shared folder permission denied, DNS, duplicate IP, etc.»
-«Same five fields.»
-
----
-
-## 🔐 Lab hygiene & safety
-
-- **Isolation:** NAT Network keeps lab VMs off my home LAN; inbound access is blocked unless I add a port-forward rule.
-- **Snapshot-first workflow:** snapshot before every new tool/exploit experiment; restore after.
-- **Shared folder risk:** the host `Downloads` folder is a bridge between host and a machine I will use to handle malware samples later. I am treating it as **untrusted**: «e.g. do not run anything from it on the host; consider switching to a dedicated `lab-share` folder or read-only for malware work».
-- **Clipboard/drag-drop risk:** bidirectional sharing is convenient but widens the host↔guest boundary. «Will set to Disabled or one-way when analysing malware.»
-- **Authorisation:** only test systems I own or have **written permission** to test.
-- **Default credentials:** «changed the default `kali` password: yes/no».
-
----
-
-## 🧭 Troubleshooting guide
-
-```mermaid
-flowchart TD
-    A[Kali has no internet] --> B{ping 10.0.0.1 works?}
-    B -- No --> C[Check adapter = NAT Network<br/>+ correct name + cable connected]
-    B -- Yes --> D{ping 8.8.8.8 works?}
-    D -- No --> E[Run DAD fix, bounce connection,<br/>check duplicate 10.0.0.2 on other VM]
-    D -- Yes --> F{nslookup works?}
-    F -- No --> G[Set DNS 8.8.8.8 or 10.0.0.1]
-    F -- Yes --> H[✅ Network OK, test apt / proxy]
-```
+- The VM is behind NAT, so my home LAN cannot reach it and inbound traffic is blocked by default.
+- The host folder is shared with the VM, so I treat its contents as untrusted.
+- I only test systems I own or have written permission to test.
 
 ---
 
 ## 💡 What I learned
 
-1. «Your own insight about NAT vs NAT Network, in your words»
-2. «Your own insight about static IP, gateway, DNS: what each one actually does»
-3. «Your own insight about DAD / NetworkManager»
-4. «Your own insight about snapshots and recovery»
-5. «Anything unexpected you learned»
+- «your own sentence about NAT vs NAT Network»
+- «your own sentence about how you spotted DHCP vs static»
+- «your own sentence about verifying with commands instead of assuming»
 
 ---
 
-## 🚀 Roadmap (Phase 2)
+## 🚀 Next steps
 
-- [ ] Windows 11 / 10 / 7 target VMs on `10.0.0.0/24` (planned IPs `.11`, `.10`, `.7`)
-- [ ] Android 9 VM (`10.0.0.9`)
-- [ ] Optional Windows Server 2016 + Active Directory lab (`10.0.0.16`)
-- [ ] Full ping matrix between all machines
-- [ ] Snapshot every VM; export an appliance backup
-
----
-
-## 🔗 References
-
-- VirtualBox: <https://virtualbox.org/wiki/Downloads>
-- Kali Linux: <https://kali.org/get-kali>
-- 7-Zip: <https://7-zip.org/download.html>
-- VirtualBox networking modes: <https://www.virtualbox.org/manual/ch06.html>
+- Add Windows target VMs on `10.0.0.0/24` and ping-test between machines
+- Snapshot every VM as a clean baseline
 
 ---
 
 ## 👤 Author
 
 **Thinul Bopearachchi (BL4CK_KN1GHT)**
-Cyber Security student · Networkwalks Cybersecurity Internship, Batch «XXX»
+Cyber Security student · Networkwalks Cybersecurity Internship
 LinkedIn: «your URL» · GitHub: «your URL»
-
-*Built and documented as part of Networkwalks Academy, Week 1 (WK1-PM1).*
