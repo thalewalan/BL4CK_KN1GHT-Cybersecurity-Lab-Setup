@@ -33,11 +33,9 @@ Every result below is backed by a screenshot from my own machine.
 | 2 | Kali Linux as attacker machine | ✅ | [03](#03--kali-linux-running) |
 | 3 | Subnet `10.0.0.0/24` | ✅ | [02](#02--nat-network) |
 | 4 | NATNetwork with `10.0.0.0/24` | ✅ | [02](#02--nat-network) |
-| 5 | Clipboard & drag/drop enabled | «add screenshot» | «Settings → General → Advanced» |
-| 6 | Shared folder from host Downloads | ✅ mounted | [06](#06--shared-folder) |
-| 7 | Kali IP = `10.0.0.2/24` | ✅ after fix, see [Problem 1](#-problems-i-faced) | [04](#04--static-ip-configured), [Problem 1 proof](#-problems-i-faced) |
-| 8 | Full internet access | ✅ | [07](#07--connectivity-tests) |
-| 9 | Snapshot taken | «add screenshot» | «Snapshots tab» |
+| 5 | Shared folder from host Downloads | ✅ mounted | [06](#06--shared-folder) |
+| 6 | Kali IP = `10.0.0.2/24` | ✅ after fix, see [Problem 1](#-problems-i-faced) | [04](#04--static-ip-configured), [Problem 1 proof](#-problems-i-faced) |
+| 7 | Full internet access | ✅ | [07](#07--connectivity-tests) |
 
 ---
 
@@ -45,8 +43,8 @@ Every result below is backed by a screenshot from my own machine.
 
 | Item | Value |
 |---|---|
-| Laptop | «model, CPU, RAM, storage» |
-| Host OS | «your host OS» |
+| Laptop | «i5 6300u, 8gb, 500HDD» |
+| Host OS | «Endeavour OS» |
 | VirtualBox | **7.2.8 r173730** (Qt 6.11.1) |
 | Guest OS | **Kali GNU/Linux Rolling 2026.2** |
 | Guest kernel | `6.19.14+kali-amd64` |
