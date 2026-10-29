@@ -99,7 +99,7 @@ flowchart LR
 | VirtualBox | «Kali-linux» |
 | Kali image | `kali-linux-«2026.x»-virtualbox-amd64` |
 | Kali VM resources | «3 GB RAM · 2 vCPU · 100 GB disk» |
-| Host IP (LAN) | «x.x.x.x» |
+| Host IP (LAN) | «10.0.0.1» |
 
 > 📌 Minimum recommended by the course: 8 GB RAM, 256 GB SSD, Core i3/i5.
 
