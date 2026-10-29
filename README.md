@@ -92,15 +92,14 @@ flowchart LR
 | Component | Value |
 |---|---|
 | Laptop | «brand / model» |
-| CPU | «e.g. Intel Core i5-6300U, 4 cores» |
+| CPU | «Intel Core i5-6300U, 4 cores» |
 | RAM (host) | «8 GB» |
 | Storage | «465 GB HDD, 255 GB free before setup» |
 | Host OS | «Windows 10/11, build xxxxx» |
 | VirtualBox | «Kali-linux» |
 | Kali image | `kali-linux-«2026.x»-virtualbox-amd64` |
-| Kali VM resources | «3 MB RAM · 2 vCPU · 100 GB disk» |
+| Kali VM resources | «3 GB RAM · 2 vCPU · 100 GB disk» |
 | Host IP (LAN) | «x.x.x.x» |
-| Virtualization | VT-x / AMD-V: «enabled in BIOS: yes/no, did I need to change it?» |
 
 > 📌 Minimum recommended by the course: 8 GB RAM, 256 GB SSD, Core i3/i5.
 
